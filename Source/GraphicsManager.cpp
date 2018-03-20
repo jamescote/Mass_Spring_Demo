@@ -87,6 +87,7 @@ bool GraphicsManager::renderGraphics()
 // Will be replaced with functions in Graphic objects.
 void GraphicsManager::RenderScene()
 {
+	/*
 	mat4 pFreNetFrame = (VIEW_SPHERICAL == m_eView) ? mat4( 1.0 ) : m_pEnvMngr->getFrenetFrame();
 	switch ( m_eView )
 	{
@@ -100,7 +101,8 @@ void GraphicsManager::RenderScene()
 		default:
 			break;
 
-	}
+	}*/
+	m_pCamera->setLookAt(m_pEnvMngr->getLookAt());
 	mat4 pModelViewMatrix = m_pCamera->getToCameraMat();
 	mat4 pProjectionMatrix = m_pCamera->getPerspectiveMat();
 	vec3 vCamLookAt = m_pCamera->getLookAt();

@@ -3,6 +3,7 @@
 
 #define INTERSECTION_EPSILON 1e-4	// Minimum intersect distance (so we don't intersect with ourselves)
 #define MAX_REFLECTIONS	800
+#define MAX_SPRING_PARAMS 7
 
 // Initialize Static Instance Variable
 EnvironmentManager* EnvironmentManager::m_pInstance = nullptr;
@@ -13,6 +14,11 @@ EnvironmentManager::EnvironmentManager()
 	m_fMinEdgeThreshold = 0.0f;
 	m_fMaxEdgeThreshold = 360.0f;
 	m_bPause = false;
+
+	//m_pSpringSystem = nullptr;
+
+	m_pSpringSystem = new MassSpringSystem(0.50f, 0.50f, 1.0f);
+	m_pSpringSystem->initialize(1, 2, 1, SpringType::SPRING);
 }
 
 // Gets the instance of the environment manager.
@@ -36,6 +42,63 @@ void EnvironmentManager::initializeEnvironment(string sFileName)
 
 	purgeEnvironment();
 	pObjFctry->loadFromFile(sFileName);
+}
+
+void EnvironmentManager::initializeMassSpringSystem(vector< string > sData, int iLength)
+{
+	// Local Variables
+	SpringType eType = SpringType::SPRING;
+
+	if (iLength == MAX_SPRING_PARAMS)
+	{
+		if (nullptr != m_pSpringSystem)
+			delete m_pSpringSystem;
+
+		int iLength = stoi(sData[0]);
+		int iDepth = stoi(sData[1]);
+		int iHeight = stoi(sData[2]);
+
+		// Ensure minimum of 1
+		if (iLength < 1)
+			iLength = 1;
+		if (iDepth < 1)
+			iDepth = 1;
+		if (iHeight < 1)
+			iHeight = 1;
+
+		// Get type of Mass Spring
+		if ("cube" == sData[6])
+			eType = SpringType::CUBE;
+		else if ("cloth" == sData[6])
+			eType = SpringType::CLOTH;
+		else if ("chain" == sData[6])
+			eType = SpringType::CHAIN;
+		else if ("flag" == sData[6])
+			eType = SpringType::FLAG;
+
+		// Generate new System
+		m_pSpringSystem = new MassSpringSystem(stof(sData[3]/*K*/), stof(sData[4]/*RestLength*/), stof(sData[5]/*Mass*/));
+		m_pSpringSystem->initialize(iLength, iHeight, iDepth, eType);
+	}
+	else
+		cout << "Error: Not enough parameters for Spring System initialization.\n";
+}
+
+// Get Look at if an object is focued.
+vec3 EnvironmentManager::getLookAt()
+{
+	vec3 vReturn = vec3(0.0);
+
+	if (nullptr != m_pSpringSystem)
+		vReturn = m_pSpringSystem->getCenter();
+
+	return vReturn;
+}
+
+void EnvironmentManager::updateMassSpring()
+{
+	if( nullptr != m_pSpringSystem )
+		m_pSpringSystem->update();
 }
 
 // Adds object to back of List
@@ -127,6 +190,12 @@ void EnvironmentManager::purgeEnvironment()
 	// Clear the array of Dangling pointers
 	m_pObjects.clear();
 	m_pLights.clear();
+
+	if (nullptr != m_pSpringSystem)
+	{
+		delete m_pSpringSystem;
+		m_pSpringSystem = nullptr;
+	}
 }
 
 // Fetch the Frenet Frame of the first MeshObject found (Hack for assignment)
@@ -178,6 +247,8 @@ void EnvironmentManager::renderEnvironment( const vec3& vCamLookAt )
 	}
 
 	m_pLights[0]->draw( vCamLookAt, m_fMinEdgeThreshold, m_fMaxEdgeThreshold, m_bPause );
+
+	m_pSpringSystem->draw(vCamLookAt, m_bPause);
 }
 
 /*********************************************************************************\

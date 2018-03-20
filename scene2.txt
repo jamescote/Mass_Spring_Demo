@@ -16,39 +16,46 @@
 #
 #      light    { x  y  z  r  g  b }
 #      sphere   { x  y  z  r }
-#      plane    { x y z  x1 y1 z1  x2 y2 z3  x3 y3 z3  x4 y4 z4  B  TextureLoc}
+#      plane    { x y z  x1 y1 z1  x2 y2 z2  x3 y3 z3  x4 y4 z4  B  TextureLoc}
 #      triangle { x y z  x1 y1 z1  x2 y2 z2  x3 y3 z3 }
 #	   mesh		{ x y z  sLocation }
+#	   mass_spring { l depth h k restLength mass type:{cube, cloth, spring, chain, flag} }
 #
 # ============================================================
 
 light {
-  1 2 0
+  0 10 0
   0.133 0.545 0.133
   +texture {
-	textures-256-256/lightbulb.png
+     textures-256-256/lightbulb.bmp
   }
 }
 
-# box
-## bottom
-plane {
-	0 -4 0
-	-10.0 -0.05 -10.0
-	-10.0 -0.05 10.0
-	10.0  -0.05 -10.0
-	10.0  -0.05 10.0
-	0
+mass_spring { 
+	10 3 10
+	1000.0 0.750 3.0 
+	cloth
 }
-## Side 1
+
+# box
+## Testing Table
 #plane {
-#	0 0 0
-#	1.0 0.0 -1.0
-#	1.0 1.0 -1.0
-#	1.0 0.0 1.0
-#	1.0 1.0 1.0
+#	0 -4 0
+#	1.0  -0.10 5.0
+#	5.0 -0.10 5.0
+#	1.0 -0.10 1.0
+#	5.0  -0.10 1.0
 #	0
 #}
+## Full Ground
+plane {
+	0 0 0
+	-50.0  -0.10 50.0
+	50.0 -0.10 50.0
+	-50.0 -0.10 -50.0
+	50.0  -0.10 -50.0
+	0
+}
 ## Side 2
 #plane {
 #	0 0 0
@@ -85,20 +92,6 @@ plane {
 #	1.0 1.0 1.0
 #	1
 #}
-
-# Mesh
-mesh_obj {
-	0 0 0
-	+mesh {
-		models/big_dodge.ply
-	}
-	+texture {
-		textures-256-256/fig-10d.png
-	}
-	+anim_track {
-savedCurveTest.txt
-	}
-}
 
 #sphere {
 #	0 .1 0 .025

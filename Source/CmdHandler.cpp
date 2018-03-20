@@ -254,6 +254,8 @@ void CmdHandler::handleKeyBoardInput(int cKey, int iAction, int iMods)
 	case(GLFW_KEY_ENTER):		// Input Handling (TODO)
 		break;
 	case(GLFW_KEY_UP):
+		if( GLFW_RELEASE == iAction )
+			m_pEnvMngr->updateMassSpring();
 		break;
 	case(GLFW_KEY_C):
 		if( iAction == GLFW_RELEASE )

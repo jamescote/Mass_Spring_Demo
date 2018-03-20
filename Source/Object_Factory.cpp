@@ -5,6 +5,7 @@
 #include "MeshObject.h"
 #include "Light.h"
 #include "Anim_Track.h"
+#include "EnvironmentManager.h"
 #include <sstream>
 #include <iterator>
 
@@ -300,20 +301,22 @@ void Object_Factory::handleData( vector< string >& sData, const string& sIndicat
 {
 	Object* pResultingObject = nullptr;
 
-	if ( "sphere" == sIndicator )			// Parse Sphere
-		pResultingObject = createSphere( sData, sData.size() );
-	else if ( "plane" == sIndicator )		// Parse Plane
-		pResultingObject = createPlane( sData, sData.size() );
-	else if ( "triangle" == sIndicator )	// Parse Triangle
-		pResultingObject = createTriangle( sData, sData.size() );
-	else if ( "light" == sIndicator )		// Parse Light
-		pResultingObject = createLight( sData, sData.size() );
-	else if ( "mesh_obj" == sIndicator )	// Parse Mesh
-		pResultingObject = createMesh( sData, sData.size() );
+	if ("sphere" == sIndicator)			// Parse Sphere
+		pResultingObject = createSphere(sData, sData.size());
+	else if ("plane" == sIndicator)		// Parse Plane
+		pResultingObject = createPlane(sData, sData.size());
+	else if ("triangle" == sIndicator)	// Parse Triangle
+		pResultingObject = createTriangle(sData, sData.size());
+	else if ("light" == sIndicator)		// Parse Light
+		pResultingObject = createLight(sData, sData.size());
+	else if ("mesh_obj" == sIndicator)	// Parse Mesh
+		pResultingObject = createMesh(sData, sData.size());
+	else if ("mass_spring" == sIndicator)	// Parse Mass Spring System
+		EnvironmentManager::getInstance()->initializeMassSpringSystem(sData, sData.size());
 
 	clearProperties();
 
-	if ( nullptr == pResultingObject )
+	if ( nullptr == pResultingObject && "mass_spring" != sIndicator )
 		outputError( &sIndicator, sData );
 
 	pResultingObject = nullptr; // Don't do anything with the Object

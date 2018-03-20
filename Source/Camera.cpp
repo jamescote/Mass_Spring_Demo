@@ -11,7 +11,7 @@
 #define FOV_Y				60.f
 #define Z_CLOSE				0.01f
 #define Z_FAR				10000.f
-#define START_RADIUS		2.5f
+#define START_RADIUS		10.0f
 
 // Vector Indexing
 #define I_THETA				0		// Spherical

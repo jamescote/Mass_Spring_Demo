@@ -2,10 +2,11 @@
 #include "stdafx.h"
 #include "Object3D.h"
 #include "Light.h"
+#include "MassSpringSystem.h"
 
 // Environment Manager
 // Manages all 3D objects in an environment
-// Written by: James Coté
+// Written by: James Cotï¿½
 class EnvironmentManager
 {
 public:
@@ -13,6 +14,7 @@ public:
 	~EnvironmentManager();
 
 	void initializeEnvironment(string sFileName);
+	void initializeMassSpringSystem(vector< string > sData, int iLength);
 	void pause() { m_bPause = !m_bPause; }
 
 	// Clears the Environment so a new one can be loaded.
@@ -29,6 +31,10 @@ public:
 	void moveLight(vec3 pMoveVec);
 	mat4 getFrenetFrame();
 
+	// Get Camera Look At if Focus
+	vec3 getLookAt();
+	void updateMassSpring();
+
 	// Edge Threshold Getters/Setters
 	void setMinThreshold( float fMin ) { m_fMinEdgeThreshold = fMin; }
 	float getMinThreshold() { return m_fMinEdgeThreshold; }
@@ -44,6 +50,7 @@ private:
 	vector<Object3D*>	m_pObjects;
 	vector<Light*>		m_pLights;
 	Object* getObject( long lID );
+	MassSpringSystem* m_pSpringSystem;
 
 	// Edge Threshold Implementation
 	float m_fMinEdgeThreshold, m_fMaxEdgeThreshold;
