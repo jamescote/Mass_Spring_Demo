@@ -1,24 +1,29 @@
 #pragma once
 #include "MassSpringSystem.h"
+#include "EnvironmentManager.h"
 
 /***********\
  * DEFINES *
 \***********/
 #define DEFAULT_START_POS vec3( 0.0, 10.0f, 0.0f )
-#define DELTA_T 0.0001f
 #define GRAVITY -9.81
-#define DAMPING_COEFF .0010f
-#define LOOPS_PER_UPDATE 16
 
 const vec3 vGRAVITY = vec3(0.0f, GRAVITY, 0.0f);
 
 // Default Constructor
-MassSpringSystem::MassSpringSystem( float fK, float fRestLength, float fMass )
+MassSpringSystem::MassSpringSystem( float fK, float fRestLength, float fMass,
+	float fDamp_Coeff, float fDelta_T, unsigned int iLoopCount,
+	float fCollision_K, float fCollision_Damp)
 {
 	// Store Private Variables
 	m_fK = fK;
 	m_fRestLength = fRestLength;
 	m_fMass = fMass;
+	m_fDamping_Coeff = fDamp_Coeff;
+	m_fDeltaT = fDelta_T;
+	m_iLoopCount = iLoopCount;
+	m_fCollisionK = fCollision_K;
+	m_fCollisionDamp = fCollision_Damp;
 	m_vShdrMngr = ShaderManager::getInstance();
 
 	// Generate Vertex Array
@@ -125,6 +130,10 @@ void MassSpringSystem::initialize( int iLength, int iHeight, int iDepth, SpringT
 			{
 				// Gen PointMass
 				m_vMasses.push_back( new PointMass( fScaledMass, vStartPos, bFixed ) );
+
+				if (eType == FLAG && !x && !z)
+					m_vMasses.back()->m_bFixed = true;
+
 				int iLengthOffset = iTotalOffset + x;
 
 				// Create springs attached to this new point
@@ -245,7 +254,7 @@ void MassSpringSystem::update()
 	vec3 vD12, vD21, vF12, vF21;
 
 	// Apply this multiple times per update to give an accurate depiction of movement per frame at a small Delta_T
-	for( int i = 0; i < LOOPS_PER_UPDATE; ++i )
+	for( unsigned int i = 0; i < m_iLoopCount; ++i )
 	{
 		// Iterate over every spring
 		for (vector< Spring* >::iterator iter = m_vSprings.begin();
@@ -262,8 +271,8 @@ void MassSpringSystem::update()
 			vF21 = fSpring * normalize(vD21);
 
 			// Add forces to points along with damping
-			(*iter)->pPoint1->m_vForce += vF12 - ((*iter)->pPoint1->m_vVelocity * DAMPING_COEFF);
-			(*iter)->pPoint2->m_vForce += vF21 - ((*iter)->pPoint2->m_vVelocity * DAMPING_COEFF);
+			(*iter)->pPoint1->m_vForce += vF12 - ((*iter)->pPoint1->m_vVelocity * m_fDamping_Coeff);
+			(*iter)->pPoint2->m_vForce += vF21 - ((*iter)->pPoint2->m_vVelocity * m_fDamping_Coeff);
 		}
 
 		// Apply Forces and update velocities and positions for Masses
@@ -278,8 +287,8 @@ void MassSpringSystem::update()
 				checkCollision( *(*iter) );
 
 				vec3 vAcceleration = (*iter)->m_vForce / (*iter)->m_fMass;		// Acceleration from Newton's 2nd Law F=ma
-				(*iter)->m_vVelocity += vAcceleration * DELTA_T;				// Velocity from definition
-				(*iter)->m_vPosition += (*iter)->m_vVelocity * DELTA_T;			// Position from definition
+				(*iter)->m_vVelocity += vAcceleration * m_fDeltaT;				// Velocity from definition
+				(*iter)->m_vPosition += (*iter)->m_vVelocity * m_fDeltaT;			// Position from definition
 				(*iter)->m_vForce = vec3(0.0f);									// reset Forces
 			}
 		}
@@ -308,23 +317,40 @@ void MassSpringSystem::update()
 //	Testing: Was testing a table cloth; masses that fell off the side ended up stretching the cloth to infinity, not sure why.
 void MassSpringSystem::checkCollision( PointMass& pMass )
 {
-	// Project position
-	vec3 vNewPos = pMass.m_vPosition + (pMass.m_vVelocity * DELTA_T);
+	/* Collision Against World Objects -> General Solution (DOESN'T WORK)
+	vec3 vRay = (pMass.m_vVelocity + ((pMass.m_vForce/pMass.m_fMass)*m_fDeltaT)) * m_fDeltaT;
+	vec3 vNewPos = pMass.m_vPosition + vRay;
+	vec3 vIntersectingNormal;
+	float fT = EnvironmentManager::getInstance()->checkCollision(pMass.m_vPosition, vRay, vIntersectingNormal);
+	
+	// Past xy-plane @ y = 0?
+	if( fT < FLT_MAX && fT > FLT_EPSILON )
+	{
+		vec3 vIntersectedPoint = pMass.m_vPosition + (normalize(vRay) * fT);
+		vec3 vPushPoint = vNewPos - ((dot((vNewPos - vIntersectedPoint), vIntersectingNormal) / dot(vIntersectingNormal, vIntersectingNormal)) * vIntersectingNormal);
+		vec3 vSpringForce = -m_fCollisionK * -vPushPoint - (m_fCollisionDamp * pMass.m_vVelocity);
+
+		pMass.m_vForce += vSpringForce;
+	}
+	//*/
+	//* Collision against xz-plane at y = 0.0 (WORKS)
+	vec3 vNewPos = pMass.m_vPosition + (pMass.m_vVelocity * m_fDeltaT);
 
 	// Past xy-plane @ y = 0?
-	if( vNewPos.y < 0.0 )
+	if (vNewPos.y < 0.0)
 	{
 		// Check for Table intersection
 		//if ( abs( vNewPos.x - 3.0 ) < 2.0f && abs( vNewPos.z - 3.0 ) < 2.0f )
 		//{
-			// Calculate Spring to add force to plane.
-			vec3 vNormal = vec3( 0.0, vNewPos.y, 0.0 );
-			vec3 vSpringForce = -m_fK * vNormal - (DAMPING_COEFF * pMass.m_vVelocity);
+		// Calculate Spring to add force to plane.
+		vec3 vNormal = vec3(0.0, vNewPos.y, 0.0);
+		vec3 vSpringForce = -m_fCollisionK * vNormal - (m_fCollisionDamp * pMass.m_vVelocity);
 
-			pMass.m_vForce += vSpringForce;
+		pMass.m_vForce += vSpringForce;
 		//}
-	}
+	}//*/
 }
+
 
 // Updates and returns the look at for the camera.
 const vec3& MassSpringSystem::getCenter()

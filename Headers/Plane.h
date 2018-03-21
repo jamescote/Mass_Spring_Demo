@@ -14,6 +14,7 @@ public:
 	
 	// Overridden Debug Output
 	string getDebugOutput();
+	bool isCollision(const vec3& vStart, const vec3& vRay, float& fT, vec3& vIntersectingNormal);
 
 private:
 	Plane( const vec3* pPosition, const vector<vec3>* pCorners, long lID, const string* sTexName, bool bUseEB, const Anim_Track* pAnimTrack );
@@ -21,6 +22,7 @@ private:
 
 	// Normal of the Plane.
 	vec3 m_pNormal;	
+	float m_fD;
 	EdgeBuffer* m_pEdgeBuffer;
 
 	// Inherited from Parent

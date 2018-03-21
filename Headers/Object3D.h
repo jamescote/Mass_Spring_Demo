@@ -19,6 +19,7 @@ public:
 	virtual void draw( const vec3& vCamLookAt, float fMinThreshold, float fMaxThreshold, bool m_bPause ) = 0;
 	virtual string getType() = 0;
 	virtual string getDebugOutput() = 0;
+	virtual bool isCollision(const vec3& vStart, const vec3& vRay, float& fT, vec3& vIntersectingNormal) = 0;
 
 protected:
 	// Protected Variables

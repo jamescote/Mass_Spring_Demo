@@ -3,7 +3,7 @@
 
 #define INTERSECTION_EPSILON 1e-4	// Minimum intersect distance (so we don't intersect with ourselves)
 #define MAX_REFLECTIONS	800
-#define MAX_SPRING_PARAMS 7
+#define MAX_SPRING_PARAMS 12
 
 // Initialize Static Instance Variable
 EnvironmentManager* EnvironmentManager::m_pInstance = nullptr;
@@ -15,10 +15,7 @@ EnvironmentManager::EnvironmentManager()
 	m_fMaxEdgeThreshold = 360.0f;
 	m_bPause = false;
 
-	//m_pSpringSystem = nullptr;
-
-	m_pSpringSystem = new MassSpringSystem(0.50f, 0.50f, 1.0f);
-	m_pSpringSystem->initialize(1, 2, 1, SpringType::SPRING);
+	m_pSpringSystem = nullptr;
 }
 
 // Gets the instance of the environment manager.
@@ -67,17 +64,24 @@ void EnvironmentManager::initializeMassSpringSystem(vector< string > sData, int 
 			iHeight = 1;
 
 		// Get type of Mass Spring
-		if ("cube" == sData[6])
+		if ("cube" == sData[11])
 			eType = SpringType::CUBE;
-		else if ("cloth" == sData[6])
+		else if ("cloth" == sData[11])
 			eType = SpringType::CLOTH;
-		else if ("chain" == sData[6])
+		else if ("chain" == sData[11])
 			eType = SpringType::CHAIN;
-		else if ("flag" == sData[6])
+		else if ("flag" == sData[11])
 			eType = SpringType::FLAG;
 
 		// Generate new System
-		m_pSpringSystem = new MassSpringSystem(stof(sData[3]/*K*/), stof(sData[4]/*RestLength*/), stof(sData[5]/*Mass*/));
+		m_pSpringSystem = new MassSpringSystem(stof(sData[3]/*K*/), 
+			stof(sData[4]/*RestLength*/), 
+			stof(sData[5]/*Mass*/),
+			stof(sData[6]/*damping_coeff*/),
+			stof(sData[7]/*delta_t*/),
+			stoi(sData[8]/*Loop_Count*/),
+			stof(sData[9]/*Collision_K*/),
+			stof(sData[10]/*Collision_Damping_Coeff*/));
 		m_pSpringSystem->initialize(iLength, iHeight, iDepth, eType);
 	}
 	else
@@ -305,4 +309,30 @@ Object* EnvironmentManager::getObject( long lID )
 	}
 
 	return pReturnObj;
+}
+
+float EnvironmentManager::checkCollision(const vec3& vPos, const vec3& vRay, vec3& vIntersectingNormal)
+{
+	float fReturnT = FLT_MAX;
+	float fT;
+	vec3 vReturnNormal = vIntersectingNormal;
+
+	for (vector< Object3D* >::const_iterator iter = m_pObjects.begin();
+		iter != m_pObjects.end();
+		++iter)
+	{
+		
+		if ((*iter)->isCollision(vPos, vRay, fT, vIntersectingNormal))
+		{
+			if (fT > FLT_EPSILON && fT < fReturnT)
+			{
+				fReturnT = fT;
+				vReturnNormal = vIntersectingNormal;
+			}
+		}
+	}
+
+	vIntersectingNormal = vReturnNormal;
+
+	return fReturnT;
 }

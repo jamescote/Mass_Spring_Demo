@@ -29,7 +29,7 @@
 #define Y_LOOK				m_vSPos[I_Y]
 #define Z_LOOK				m_vSPos[I_Z]
 
-const vec3 DEFAULT_POS = vec3( 90.f, 8.5308f, START_RADIUS ); // (Theta, Phi, Radius)
+const vec3 DEFAULT_POS = vec3( 90.f, 90.f, START_RADIUS ); // (Theta, Phi, Radius)
 
 // Constructor
 Camera::Camera( int iHeight, int iWidth )

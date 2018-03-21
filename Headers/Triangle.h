@@ -20,6 +20,8 @@ public:
 	// Overridden Debug Output
 	string getDebugOutput();
 
+	bool isCollision(const vec3& vStart, const vec3& vRay, float& fT, vec3& vIntersectingNormal) { return false; /*Not Implemented*/ }
+
 private:
 	// Only Accessable by Object Factory
 	Triangle( const vec3* pPosition,

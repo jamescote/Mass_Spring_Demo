@@ -1,6 +1,7 @@
 #include "Plane.h"
 
 #define NUM_CORNERS 4
+#define PI					3.14159265f
 
 // Constructor
 Plane::Plane( const vec3* pPosition,
@@ -18,6 +19,16 @@ Plane::Plane( const vec3* pPosition,
 	}
 	else
 		m_pVertices.insert( m_pVertices.begin(), pCorners->begin(), pCorners->end() );
+
+	vec3 vTranslateVector = m_pPosition - vec3(0.0);
+	mat4 mTranslationMatrix = translate(mat4(1.0), vTranslateVector);
+	m_fD = length(vTranslateVector);
+
+	// Translate Plane to Specified Position in 3D space.
+	for (vector< vec3 >::iterator iter = m_pVertices.begin();
+		iter != m_pVertices.end();
+		++iter)
+		(*iter) = vec3( mTranslationMatrix * vec4((*iter), 1.0) );
 
 	// Set up Normal and Vertex Normals
 	m_pNormal = normalize( cross( m_pVertices[ 1 ] - m_pVertices[ 0 ], m_pVertices[ 2 ] - m_pVertices[ 0 ] ) );
@@ -64,6 +75,71 @@ string Plane::getDebugOutput()
 	sOutput += "/Normal:" + glm::to_string( m_pNormal );
 
 	return sOutput;
+}
+
+bool Plane::isCollision(const vec3& vStart, const vec3& vRay, float& fT, vec3& vIntersectingNormal)
+{
+	// Local Variables
+	vec3 vDest = vStart + vRay;
+	vec3 vRayNormalized, vIntersection;
+	fT = dot(vDest, m_pNormal) + m_fD;
+	bool bReturn = false;
+
+	// Lies on or behind the plane but started before the normal.
+	if ( fT <= 0.0f && (dot(vStart, m_pNormal) + m_fD) >= 0.0f )
+	{
+		// Calculate whether the ray crosses through the plane
+		vRayNormalized = normalize(vRay);
+		fT = -(dot(m_pNormal, vStart) + m_fD) / dot(m_pNormal, vRayNormalized);
+		vIntersection = vStart + (vRayNormalized * fT);
+		vec3 v1, v2, v3, v4;
+
+		v1 = normalize(vIntersection - m_pVertices[0]);
+		v2 = normalize(vIntersection - m_pVertices[1]);
+		v3 = normalize(vIntersection - m_pVertices[2]);
+
+		float fTheta1;
+
+		// Angles around intersection should total 360 (2Pi)
+		/*
+			glm::vec3( -1.f, 0.f, -1.f )
+			glm::vec3( -1.f, 0.f, 1.f ) 
+			glm::vec3( 1.f, 0.f, -1.f ) 
+			glm::vec3( 1.f, 0.f, 1.f ) )
+
+			v2-v4
+			| \ |
+			v1-v3
+		*/
+		fTheta1 = acos(dot(v1, v2))
+				+ acos(dot(v2, v3))
+				+ acos(dot(v3, v1));
+
+		// Check Tri v1,v2,v3
+		// Intersected through first Triangle
+		if (fabs(fTheta1 - (2 * PI) < 0.1))
+			bReturn = true;
+		else
+		{	
+			v4 = normalize(vIntersection - m_pVertices[3]);
+
+			// Check Tri v2,v4,v3
+			fTheta1 = acos(dot(v2, v4))
+					+ acos(dot(v4, v3))
+					+ acos(dot(v3, v2));
+
+			// Intersected through other triangle instead.
+			if (fabs(fTheta1 - (2 * PI) < 0.1))
+				bReturn = true;
+		}
+	}
+
+	// Return the Normal
+	if (bReturn)
+		vIntersectingNormal = m_pNormal;
+
+	// Return true if possible intersection
+	return bReturn;
 }
 
 // Setup OpenGl to draw the Plane using the Plane Shader.

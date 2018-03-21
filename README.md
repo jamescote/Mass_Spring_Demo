@@ -11,6 +11,24 @@ WASD - controls the position of the light along the XZ-axis
 Space and X - moves the light along the Y-axis; up and down respectively
 Mouse Wheel - Zoom
 Right-Click + Drag - Rotate around look-at position
-C - swaps between camera modes: Spherical (Viewing World Coord (0.0, 0.0, 0.0)), Spherical - Following Cart and Positioned behind the cart.
-P - Pauses animation
+P - Pauses animation (toggle)
+Up-Key - Updates 1 Frame, useful for frame stepping when paused.
+
+Scene Modification:
+The default scene that gets loaded is "scene2.txt". The Mass Spring is loaded as so:
+
+mass_spring { 
+	length depth height 
+	k restLength mass 
+	damping_coeff delta_t update_loop_count 
+	Collision_K Collision_Damping_Coeff 
+	type:{cube, cloth, spring, chain, flag}
+}
+
+Play around with it for some different evaluations. The types only work to fix certain points:
+
+Spring/Chain -> Fixes the first mass.
+cloth -> Fixes the first mass and the iLength mass
+cube -> No masses are fixed
+flag -> All first masses along the height are fixed. Flag functionality isn't implemented.
 

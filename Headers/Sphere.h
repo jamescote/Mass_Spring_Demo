@@ -16,6 +16,8 @@ public:
 
 	// Overridden Debug Output
 	string getDebugOutput();
+
+	bool isCollision(const vec3& vStart, const vec3& vRay, float& fT, vec3& vIntersectingNormal) { return false; /*Not Implemented*/ }
 	
 private:
 	// Constructor for Spheres

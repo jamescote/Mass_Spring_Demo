@@ -16,7 +16,9 @@ enum SpringType
 class MassSpringSystem
 {
 public:
-	MassSpringSystem( float fK, float fRestLength, float fMass );
+	MassSpringSystem( float fK, float fRestLength, float fMass,
+					  float fDamp_Coeff, float fDelta_T, unsigned int iLoopCount,
+					  float fCollision_K, float fCollision_Damp );
 	~MassSpringSystem();
 
 	// Overridden intersect function
@@ -31,6 +33,8 @@ private:
 	// Only Accessable by Object Factory
 	MassSpringSystem( const MassSpringSystem* pNewMassSpringSystem );  // Protected Copy Constructor
 	float m_fK, m_fRestLength, m_fMass;
+	float m_fDeltaT, m_fDamping_Coeff, m_fCollisionK, m_fCollisionDamp;
+	unsigned int m_iLoopCount;
 	ShaderManager* m_vShdrMngr;
 	GLuint m_iVertexArray, m_iVertexBuffer, m_iIndicesBuffer, m_iNormalBuffer;
 	vec3 m_vCenter;

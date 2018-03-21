@@ -23,6 +23,7 @@ public:
 	void killLight( long lID );
 	void listEnvironment();
 	void renderEnvironment( const vec3& vCamLookAt );
+	float checkCollision( const vec3& vPos, const vec3& vRay, vec3& vIntersectingNormal);
 
 	// Texture Manipulation
 	void switchTexture( const string* sTexLocation, long lObjID );

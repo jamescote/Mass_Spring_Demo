@@ -18,6 +18,7 @@ public:
 	void draw( const vec3& vCamLookAt, float fMinThreshold, float fMaxThreshold, bool m_bPause );
 	string getType() { return "MeshObject"; }
 	string getDebugOutput();
+	bool isCollision(const vec3& vStart, const vec3& vRay, float& fT, vec3& vIntersectingNormal ) { return false; /*Not Implemented*/ }
 
 	mat4 getFreNetFrames();
 
