@@ -45,11 +45,14 @@ private:
 		// Private PointMass Variables
 		float m_fMass;
 		vec3 m_vPosition, m_vVelocity, m_vForce;
+		vec3 m_vCollisionIntersection, m_vCollisionNormal;
+		bool m_bColliding;
 		bool m_bFixed;
 
 		// Constructors (Default, Copy, equal Operator)
 		PointMass(float fMass, const vec3& vPos, bool bFixed)
-			: m_fMass( fMass ), m_vPosition( vPos ), m_vVelocity( 0.0f ), m_vForce( 0.0f ), m_bFixed( bFixed )
+			: m_fMass( fMass ), m_vPosition( vPos ), m_vVelocity( 0.0f ), m_vForce( 0.0f ), m_bFixed( bFixed ),
+				m_bColliding(false), m_vCollisionIntersection(0.0f), m_vCollisionNormal(0.0f)
 		{ }
 		PointMass( const PointMass* pCopy )
 		{

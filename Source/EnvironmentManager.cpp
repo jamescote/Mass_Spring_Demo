@@ -74,8 +74,8 @@ void EnvironmentManager::initializeMassSpringSystem(vector< string > sData, int 
 			eType = SpringType::FLAG;
 
 		// Generate new System
-		m_pSpringSystem = new MassSpringSystem(stof(sData[3]/*K*/), 
-			stof(sData[4]/*RestLength*/), 
+		m_pSpringSystem = new MassSpringSystem(stof(sData[3]/*K*/),
+			stof(sData[4]/*RestLength*/),
 			stof(sData[5]/*Mass*/),
 			stof(sData[6]/*damping_coeff*/),
 			stof(sData[7]/*delta_t*/),
@@ -204,7 +204,7 @@ void EnvironmentManager::purgeEnvironment()
 
 // Fetch the Frenet Frame of the first MeshObject found (Hack for assignment)
 mat4 EnvironmentManager::getFrenetFrame()
-{ 
+{
 	mat4 pReturnVal = mat4( 1.0 );	// Default: return Identity Matrix
 
 	for ( vector<Object3D*>::iterator pObjIter = m_pObjects.begin();
@@ -311,20 +311,27 @@ Object* EnvironmentManager::getObject( long lID )
 	return pReturnObj;
 }
 
+// Given a Ray and starting position, check for a collision against all 3D objects in the environment.
+// Can be modified and sped up using simplified bounding for complex objects and graphing of objects for
+//	quicker culling of impossible collisions
 float EnvironmentManager::checkCollision(const vec3& vPos, const vec3& vRay, vec3& vIntersectingNormal)
 {
+	// Local Variables
 	float fReturnT = FLT_MAX;
 	float fT;
-	vec3 vReturnNormal = vIntersectingNormal;
+	vec3 vReturnNormal = vIntersectingNormal; // Save return normal in event no collision is detected
 
+	// Iterate through and check collisions
 	for (vector< Object3D* >::const_iterator iter = m_pObjects.begin();
 		iter != m_pObjects.end();
 		++iter)
 	{
-		
+		// Found a Collision? Returns a T value for the ray at point of intersection
+		// Also returns a normal of the intersection.
 		if ((*iter)->isCollision(vPos, vRay, fT, vIntersectingNormal))
 		{
-			if (fT > FLT_EPSILON && fT < fReturnT)
+			// want the closest (first collision), do not want a collision behind the ray.
+			if (fT >= 0.0 && fT < fReturnT)
 			{
 				fReturnT = fT;
 				vReturnNormal = vIntersectingNormal;
@@ -332,7 +339,9 @@ float EnvironmentManager::checkCollision(const vec3& vPos, const vec3& vRay, vec
 		}
 	}
 
+	// Return closest intersecting normal
 	vIntersectingNormal = vReturnNormal;
 
+	// Return T
 	return fReturnT;
 }

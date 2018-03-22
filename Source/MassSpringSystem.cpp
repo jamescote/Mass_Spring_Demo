@@ -109,7 +109,7 @@ void MassSpringSystem::initialize( int iLength, int iHeight, int iDepth, SpringT
 	float fScaledMass = m_fMass / (iLxH * iDepth);
 	bool bFixed = false;
 	vec3 vStartPos = DEFAULT_START_POS;
-	
+
 	// Store a center position for Camera to focus on.
 	m_vCenter = vec3(DEFAULT_START_POS.x + (((float)iLength / 2.0f) * m_fRestLength),
 					 DEFAULT_START_POS.y - (((float)iHeight / 2.0f) * m_fRestLength),
@@ -169,7 +169,7 @@ void MassSpringSystem::initialize( int iLength, int iHeight, int iDepth, SpringT
 							m_vSprings.push_back(new Spring(m_vMasses[iLengthOffset - iLxH - iLength + 1], m_vMasses[iLengthOffset]));
 						//*/
 					}
-		
+
 					//* Along Z
 					m_vSprings.push_back(new Spring(m_vMasses[iLengthOffset - iLxH], m_vMasses[iLengthOffset]));
 					//*/
@@ -317,23 +317,42 @@ void MassSpringSystem::update()
 //	Testing: Was testing a table cloth; masses that fell off the side ended up stretching the cloth to infinity, not sure why.
 void MassSpringSystem::checkCollision( PointMass& pMass )
 {
-	/* Collision Against World Objects -> General Solution (DOESN'T WORK)
+	//* Collision Against World Objects -> General Solution (DOESN'T WORK)
+	// Apply Current Force as Acceleration to get Velocity Vector; Scale Ray by timestep
 	vec3 vRay = (pMass.m_vVelocity + ((pMass.m_vForce/pMass.m_fMass)*m_fDeltaT)) * m_fDeltaT;
-	vec3 vNewPos = pMass.m_vPosition + vRay;
-	vec3 vIntersectingNormal;
-	float fT = EnvironmentManager::getInstance()->checkCollision(pMass.m_vPosition, vRay, vIntersectingNormal);
+	vec3 vNewPos = pMass.m_vPosition + vRay;	// Get new Position
+	vec3 vPushPoint, vSpringForce, vDiff;
+	float fT;
 	
-	// Past xy-plane @ y = 0?
-	if( fT < FLT_MAX && fT > FLT_EPSILON )
+	// No collision detected yet
+	if (!pMass.m_bColliding)
 	{
-		vec3 vIntersectedPoint = pMass.m_vPosition + (normalize(vRay) * fT);
-		vec3 vPushPoint = vNewPos - ((dot((vNewPos - vIntersectedPoint), vIntersectingNormal) / dot(vIntersectingNormal, vIntersectingNormal)) * vIntersectingNormal);
-		vec3 vSpringForce = -m_fCollisionK * -vPushPoint - (m_fCollisionDamp * pMass.m_vVelocity);
+		// Check for Collisions
+		fT = EnvironmentManager::getInstance()->checkCollision(pMass.m_vPosition, vRay, pMass.m_vCollisionNormal);
+
+		// Past xy-plane @ y = 0?
+		if (pMass.m_bColliding = (fT < FLT_MAX && fT > 0.0f))
+		{
+			pMass.m_vCollisionIntersection = pMass.m_vPosition + (normalize(vRay) * fT);	// Store the intersection
+			vDiff = vNewPos - pMass.m_vCollisionIntersection;								// Calculate difference
+		}
+	}
+	else // Still dealing with a collision.
+	{
+		vDiff = vNewPos - pMass.m_vCollisionIntersection;									// Update Difference
+		pMass.m_bColliding = (dot(vDiff, pMass.m_vCollisionNormal) <= 0.0f);				// Determine if a collision is still occuring
+	}
+
+	// There is a collision? calculate the force.
+	if (pMass.m_bColliding)
+	{
+		vPushPoint = -((dot(vDiff, pMass.m_vCollisionNormal) / dot(pMass.m_vCollisionNormal, pMass.m_vCollisionNormal)) * pMass.m_vCollisionNormal);
+		vSpringForce = -m_fCollisionK * -vPushPoint - (m_fCollisionDamp * pMass.m_vVelocity);
 
 		pMass.m_vForce += vSpringForce;
 	}
 	//*/
-	//* Collision against xz-plane at y = 0.0 (WORKS)
+	/* Collision against xz-plane at y = 0.0 (WORKS)
 	vec3 vNewPos = pMass.m_vPosition + (pMass.m_vVelocity * m_fDeltaT);
 
 	// Past xy-plane @ y = 0?
@@ -345,8 +364,11 @@ void MassSpringSystem::checkCollision( PointMass& pMass )
 		// Calculate Spring to add force to plane.
 		vec3 vNormal = vec3(0.0, vNewPos.y, 0.0);
 		vec3 vSpringForce = -m_fCollisionK * vNormal - (m_fCollisionDamp * pMass.m_vVelocity);
+		cout << "Spring Force: {" << vSpringForce.x << ", " << vSpringForce.y << ", " << vSpringForce.z << "}\n";
+		cout << "Added to current force: {" << pMass.m_vForce.x << ", " << pMass.m_vForce.y << ", " << pMass.m_vForce.z << "}\n";
 
 		pMass.m_vForce += vSpringForce;
+		cout << "\t==: {" << pMass.m_vForce.x << ", " << pMass.m_vForce.y << ", " << pMass.m_vForce.z << "}\n";
 		//}
 	}//*/
 }
@@ -355,6 +377,6 @@ void MassSpringSystem::checkCollision( PointMass& pMass )
 // Updates and returns the look at for the camera.
 const vec3& MassSpringSystem::getCenter()
 {
-	m_vCenter = (m_vMasses.empty() ? m_vCenter : vec3(0.0, m_vMasses.front()->m_vPosition.y, 0.0)); 
-	return m_vCenter; 
+	m_vCenter = (m_vMasses.empty() ? m_vCenter : m_vMasses.front()->m_vPosition);
+	return m_vCenter;
 }

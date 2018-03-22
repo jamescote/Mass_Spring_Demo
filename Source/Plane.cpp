@@ -5,7 +5,7 @@
 
 // Constructor
 Plane::Plane( const vec3* pPosition,
-			  const vector<glm::vec3>* pCorners, 
+			  const vector<glm::vec3>* pCorners,
 			  long lID,
 			  const string* sTexName,
 			  bool bUseEB, const Anim_Track* pAnimTrack ) : Object3D( pPosition, lID, sTexName, pAnimTrack )
@@ -39,7 +39,7 @@ Plane::Plane( const vec3* pPosition,
 	glGenVertexArrays( 1, &m_iVertexArray );
 
 	m_iVertexBuffer = ShaderManager::getInstance()->genVertexBuffer( m_iVertexArray,
-									    							 0, 3, m_pVertices.data(), 
+									    							 0, 3, m_pVertices.data(),
 																	 m_pVertices.size() * sizeof( glm::vec3 ), GL_STATIC_DRAW );
 	m_iNormalBuffer = ShaderManager::getInstance()->genVertexBuffer( m_iVertexArray,
 																	 1, 3, m_pNormals.data(),
@@ -77,20 +77,21 @@ string Plane::getDebugOutput()
 	return sOutput;
 }
 
+// Checks collision of ray from start point against this plane.
 bool Plane::isCollision(const vec3& vStart, const vec3& vRay, float& fT, vec3& vIntersectingNormal)
 {
 	// Local Variables
 	vec3 vDest = vStart + vRay;
 	vec3 vRayNormalized, vIntersection;
-	fT = dot(vDest, m_pNormal) + m_fD;
+	fT = dot(vDest, m_pNormal) - m_fD;
 	bool bReturn = false;
 
-	// Lies on or behind the plane but started before the normal.
-	if ( fT <= 0.0f && (dot(vStart, m_pNormal) + m_fD) >= 0.0f )
+	// Lies on or behind the plane but started before intersecting.
+	if ( fT <= 0.0f && (dot(vStart, m_pNormal) - m_fD) >= 0.0f )
 	{
 		// Calculate whether the ray crosses through the plane
 		vRayNormalized = normalize(vRay);
-		fT = -(dot(m_pNormal, vStart) + m_fD) / dot(m_pNormal, vRayNormalized);
+		fT = -(dot(m_pNormal, vStart) - m_fD) / dot(m_pNormal, vRayNormalized);
 		vIntersection = vStart + (vRayNormalized * fT);
 		vec3 v1, v2, v3, v4;
 
@@ -103,8 +104,8 @@ bool Plane::isCollision(const vec3& vStart, const vec3& vRay, float& fT, vec3& v
 		// Angles around intersection should total 360 (2Pi)
 		/*
 			glm::vec3( -1.f, 0.f, -1.f )
-			glm::vec3( -1.f, 0.f, 1.f ) 
-			glm::vec3( 1.f, 0.f, -1.f ) 
+			glm::vec3( -1.f, 0.f, 1.f )
+			glm::vec3( 1.f, 0.f, -1.f )
 			glm::vec3( 1.f, 0.f, 1.f ) )
 
 			v2-v4
@@ -120,7 +121,7 @@ bool Plane::isCollision(const vec3& vStart, const vec3& vRay, float& fT, vec3& v
 		if (fabs(fTheta1 - (2 * PI) < 0.1))
 			bReturn = true;
 		else
-		{	
+		{
 			v4 = normalize(vIntersection - m_pVertices[3]);
 
 			// Check Tri v2,v4,v3
@@ -157,7 +158,7 @@ void Plane::draw( const vec3& vCamLookAt, float fMinThreshold, float fMaxThresho
 	glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
 
 	// Render EdgeBuffer
-	if ( nullptr != m_pEdgeBuffer ) 
+	if ( nullptr != m_pEdgeBuffer )
 	{
 		m_pEdgeBuffer->CalculateEdgeBufferStrip( m_pNormals, &vCamLookAt );
 		m_pEdgeBuffer->drawEdgeBuffer( m_fScale, m_pPosition, fMinThreshold, fMaxThreshold );
@@ -177,7 +178,7 @@ void Plane::calculateUVs()
 	m_pUVs.push_back( vec2( 1.0, 0.0 ) );
 	m_pUVs.push_back( vec2( 1.0, 1.0 ) );
 
-	m_iTextureBuffer = ShaderManager::getInstance()->genVertexBuffer( m_iVertexArray, 
-																	  2, 2, m_pUVs.data(), 
+	m_iTextureBuffer = ShaderManager::getInstance()->genVertexBuffer( m_iVertexArray,
+																	  2, 2, m_pUVs.data(),
 																	  m_pUVs.size() * sizeof( vec2 ), GL_STATIC_DRAW );
 }
