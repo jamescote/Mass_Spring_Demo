@@ -1,5 +1,5 @@
 Compiling on Windows:
-Compiled using MSVS 2015.  Will add one for 2013 as well in the future.  
+Compiled using MSVS 2015.
 You'll need to set up OpenGL, GLEW, and trimesh.lib in the settings of the solution as required libraries.
 
 Compiling on Linux:
@@ -32,3 +32,4 @@ cloth -> Fixes the first mass and the iLength mass
 cube -> No masses are fixed
 flag -> All first masses along the height are fixed. Flag functionality isn't implemented.
 
+Collision works with the {0,0,0} plane. Did not get collision working with other objects.
